@@ -38,4 +38,4 @@ Implications:
 - Don't name batch files `start.bat`/`stop.bat`: typing `start` in cmd runs the built-in START (it opens a blank console).
 - In `.bat` files, use `ping -n N 127.0.0.1 >nul` for delays. `timeout` fails when there's no interactive console.
 - `stop-viewer.bat` deliberately kills by port and by go2rtc path, never every `node.exe` (other apps such as Stream Deck run Node).
-- This folder is its own git repo (branch `master`, no remote). It's nested inside a repo that covers the user's whole home directory (`%USERPROFILE%`), so run git commands from this folder.
+- This folder is its own git repo (branch `master`, remote `origin` on GitHub). On the dev machine it's nested inside a repo that covers the user's whole home directory (`%USERPROFILE%`), so run git commands from this folder.
