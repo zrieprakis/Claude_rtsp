@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Camera Setup</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="config">
+    <h1>Camera setup</h1>
+    <p class="hint">Enter the full RTSP URI for each quadrant. Leave a field empty to keep that quadrant blank.</p>
+
+    <form id="form" autocomplete="off">
+      <div id="rows"></div>
+      <div class="actions">
+        <button type="submit" class="primary">Save</button>
+        <a href="/">Back to viewer</a>
+        <span id="status" role="status"></span>
+      </div>
+    </form>
+  </main>
+
+  <script type="module">
+    const rows = document.getElementById('rows');
+    const status = document.getElementById('status');
+    const positions = ['top left', 'top right', 'bottom left', 'bottom right'];
+
+    const inputs = positions.map((pos, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <label for="cam${i}">Camera ${i + 1} <small style="color:var(--muted);font-weight:400">(${pos})</small></label>
+        <div class="field">
+          <input id="cam${i}" type="text" spellcheck="false" placeholder="rtsp://user:pass@192.168.1.x:554/stream1">
+          <button type="button">Clear</button>
+        </div>`;
+      const input = row.querySelector('input');
+      row.querySelector('button').addEventListener('click', () => { input.value = ''; input.focus(); });
+      rows.append(row);
+      return input;
+    });
+
+    function setStatus(text, kind = '') {
+      status.textContent = text;
+      status.className = kind;
+    }
+
+    try {
+      const { cams } = await fetch('/api/config').then((r) => r.json());
+      cams.forEach((uri, i) => { inputs[i].value = uri; });
+    } catch {
+      setStatus('Could not load the current configuration.', 'error');
+    }
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setStatus('Saving…');
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cams: inputs.map((input) => input.value.trim()) }),
+        });
+        const body = await res.json();
+        if (!res.ok) return setStatus(body.error || 'Save failed.', 'error');
+        setStatus('Saved — streams restarting.', 'ok');
+      } catch {
+        setStatus('Save failed: server unreachable.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

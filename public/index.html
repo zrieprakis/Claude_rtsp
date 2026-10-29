@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Camera Grid</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/vendor/video-stream.js"></script>
+</head>
+<body>
+  <a class="gear" href="/config" title="Configure cameras">&#9881;</a>
+  <main class="grid" id="grid"></main>
+
+  <script type="module">
+    const grid = document.getElementById('grid');
+    // go2rtc listens on the same host as this page, port 1984.
+    const go2rtc = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:1984`;
+
+    const { cams } = await fetch('/api/config').then((r) => r.json());
+
+    cams.forEach((uri, i) => {
+      const quad = document.createElement('section');
+      quad.className = 'quad';
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = `Camera ${i + 1}`;
+      quad.append(label);
+
+      if (uri) {
+        const player = document.createElement('video-stream');
+        player.src = `${go2rtc}/api/ws?src=cam${i + 1}`;
+        quad.append(player);
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'placeholder';
+        empty.innerHTML = '<span>Not configured</span><a href="/config">Set up</a>';
+        quad.append(empty);
+      }
+
+      quad.addEventListener('dblclick', () => {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else quad.requestFullscreen();
+      });
+
+      grid.append(quad);
+    });
+  </script>
+</body>
+</html>
